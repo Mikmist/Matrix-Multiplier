@@ -39,6 +39,7 @@ Matrix newMatrix(int rows, int columns){
         result.data[row] = malloc(columns*sizeof(float));
         assert(result.data[row] != NULL);
     }
+	return result;
 }
 
 /*
@@ -56,8 +57,8 @@ Prints a matrix.
 */
 void printMatrix(Matrix m){
     printf("Matrix: %d x %d\n", m.rows, m.columns);
-    for (int col = 0; col < m.columns; col++){
-        for (int row = 0; row < m.rows; row++){
+    for (int row = 0; row < m.rows; row++){
+        for (int col = 0; col < m.columns; col++){
             printf("\t%f", m.data[row][col]);
         }
         printf("\n");
@@ -70,15 +71,15 @@ Multiplies two matricies. SEGMENTATION FAULT!!! FIX THIS!!!
 Matrix matrixMultiply(Matrix a, Matrix b){
     if (matricesCompatible(a, b)){
         Matrix result = newMatrix(a.rows, b.columns);
-        for (int row = 0; row < a.rows; row++){
-            for (int col = 0; col < b.columns; col++){
-                int sum = 0;
-                for (int rowB = 0; rowB < b.rows; rowB++){
-                    sum += a.data[row][rowB]*b.data[rowB][col];
-                }
-                result.data[row][col] = sum;
-            }
-        }
+        for (int i = 0; i < a.rows; i++){
+			for (int j = 0; j < b.columns; j++){
+				float sum = 0;
+				for (int k = 0; k < a.columns; k++){
+					sum += a.data[i][k]*b.data[k][j];
+				}
+				result.data[i][j] = sum;
+			}
+		}
         return result;
     } else {
         printf("Matrices are not compatible for multiplication.\nA: %d x %d, B: %d x %d\n", a.rows, a.columns, b.rows, b.columns);
@@ -113,13 +114,15 @@ Matrix scanMatrix() {
 }
 
 int main() {
-    /**> Introduction*/
     printf("This program will calculate the product of two matrices with dimensions provided to it.\n");
     printf("When inputting multiple values, separate them by a space.\n\n");
 
+	printf("Enter matrix A:\n");
     Matrix A = scanMatrix();
+	printf("Enter matrix B:\n");
     Matrix B = scanMatrix();
 
+	printf("\nResult:\n");
     Matrix result = matrixMultiply(A, B);
 
     printMatrix(result);
