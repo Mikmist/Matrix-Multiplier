@@ -17,12 +17,51 @@ typedef struct {
 } Matrix;
 
 /*
+Prints a matrix.
+*/
+void printMatrix(Matrix m){
+    printf("Matrix: %d x %d\n", m.rows, m.columns);
+    for (int row = 0; row < m.rows; row++){
+        for (int col = 0; col < m.columns; col++){
+            if (col == 0)
+				printf("|");
+			printf("\t%f", m.data[row][col]);
+			if (col == m.columns - 1)
+				printf("|");
+        }
+        printf("\n");
+    }
+	printf("\n");
+}
+
+/*
+Determines if a matrix is just one number.
+*/
+int isScalar(Matrix m){
+	return (m.rows == 1 && m.columns == 1);
+}
+
+/*
+Multiplies the matrix by a scalar.
+*/
+void scaleMatrix(Matrix m, float scalar){
+	for (int row = 0; row < m.rows; row++){
+		for (int col = 0; col < m.columns; col++){
+			m.data[row][col] *= scalar;
+		}
+	}
+}
+
+/*
 Determines if two matrices are compatible for multiplication.
+Returns 1 if the matrices are compatible, and returns 2 if the matrices need to swap placed to be compatible.
 */
 int matricesCompatible(Matrix a, Matrix b){
-    if (a.columns == b.rows){
+    if (a.columns == b.rows || isScalar(a) || isScalar(b)){
         return 1;
-    }
+    } else if (b.columns = a.rows){
+		return 2;
+	}
     return 0;
 }
 
@@ -46,6 +85,8 @@ Matrix newMatrix(int rows, int columns){
 Frees a matrix.
 */
 void freeMatrix(Matrix m){
+	if (m.data == NULL)
+		return;
     for (int row = 0; row < m.rows; row++){
         free(m.data[row]);
     }
@@ -53,23 +94,33 @@ void freeMatrix(Matrix m){
 }
 
 /*
-Prints a matrix.
+Swaps two matrices.
 */
-void printMatrix(Matrix m){
-    printf("Matrix: %d x %d\n", m.rows, m.columns);
-    for (int row = 0; row < m.rows; row++){
-        for (int col = 0; col < m.columns; col++){
-            printf("\t%f", m.data[row][col]);
-        }
-        printf("\n");
-    }
+void swapMatrices(Matrix *a, Matrix *b){
+	Matrix temp = *a;
+	*a = *b;
+	*b = temp;
 }
 
 /*
-Multiplies two matricies. SEGMENTATION FAULT!!! FIX THIS!!!
+Multiplies two matricies. It will swap them if that is needed.
+The matrices must be freed outside of this function.
 */
 Matrix matrixMultiply(Matrix a, Matrix b){
-    if (matricesCompatible(a, b)){
+	//First test if the matrices can be multiplied.
+    if (matricesCompatible(a, b) > 0){
+		//If either matrix is a scalar, then multiplication is ez.
+		if (isScalar(a)){
+			scaleMatrix(b, a.data[0][0]);
+			return b;
+		} else if (isScalar(b)){
+			scaleMatrix(a, b.data[0][0]);
+			return a;
+		}
+		//Test if a and b need to be swapped to allow multiplication.
+		if (matricesCompatible(a, b) == 2){
+			swapMatrices(&a, &b);
+		}
         Matrix result = newMatrix(a.rows, b.columns);
         for (int i = 0; i < a.rows; i++){
 			for (int j = 0; j < b.columns; j++){
@@ -94,10 +145,11 @@ Reads a matrix from input, where numbers are separated by spaces.
 */
 Matrix scanMatrix() {
     Matrix m;
-    printf("Enter the dimensions of the matrix:\n");
+	printf("<Matrix Entry:>\n");
+    printf("\tEnter the dimensions of the matrix:\n");
     scanf("%d %d", &(m.rows), &(m.columns));
     getchar();//Absorb newline.
-    printf("Enter the elements of the matrix, row by row, separated by spaces.\n");
+    printf("\tEnter the elements of the matrix, row by row, separated by spaces.\n");
     m.data = malloc(m.rows*sizeof(float*));
     assert(m.data != NULL);
     for (int row = 0; row < m.rows; row++){
@@ -110,23 +162,32 @@ Matrix scanMatrix() {
             getchar();//Absorb space or newline after number.
         }
     }
+	printf("<Matrix recorded>\n");
     return m;
 }
 
-int main() {
-    printf("This program will calculate the product of two matrices with dimensions provided to it.\n");
-    printf("When inputting multiple values, separate them by a space.\n\n");
-
-	printf("Enter matrix A:\n");
+/*
+Independent function to interact with the user for matrix multiplication.
+*/
+void userMultiply(){
+	printf("Matrix Multiplication Assistant:\n");
+	printf("\nEnter matrix A:\n\n");
     Matrix A = scanMatrix();
-	printf("Enter matrix B:\n");
+	printf("\nEnter matrix B:\n\n");
     Matrix B = scanMatrix();
 
-	printf("\nResult:\n");
+	printf("\nResult of A x B:\n");
     Matrix result = matrixMultiply(A, B);
 
     printMatrix(result);
+	freeMatrix(A);
+	freeMatrix(B);
+	freeMatrix(result);
+}
+
+int main(int argc, char* argv[]) {
     
+    userMultiply();
     
-  return 0;
+	return 0;
 }
